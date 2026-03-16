@@ -7,19 +7,27 @@ interface EmailConnectProps {
   compact?: boolean; // for use inside Settings
 }
 
+const APP_URL = (import.meta as { env: Record<string, string> }).env.VITE_APP_URL || 'https://getdominiontech.com';
+
+function getOAuthUrl(provider: 'google' | 'microsoft', userId: string): string {
+  return `${APP_URL}/api/auth/${provider}?userId=${encodeURIComponent(userId)}`;
+}
+
 export function EmailConnect({ onDone, compact = false }: EmailConnectProps) {
   const { user, addEmailConnection, removeEmailConnection } = useAuth();
-  const [connectingProvider, setConnectingProvider] = useState<'gmail' | 'outlook' | null>(null);
-  const [showManualForm, setShowManualForm] = useState<'gmail' | 'outlook' | null>(null);
+  const [manualMode, setManualMode] = useState<'gmail' | 'outlook' | null>(null);
   const [manualEmail, setManualEmail] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
   const gmailConnected = user?.emailConnections.find(c => c.provider === 'gmail');
   const outlookConnected = user?.emailConnections.find(c => c.provider === 'outlook');
 
-  const handleConnect = (provider: 'gmail' | 'outlook') => {
-    setConnectingProvider(provider);
-    setShowManualForm(provider);
+  // Use OAuth when deployed; fall back to manual form in local dev
+  const isLocalDev = APP_URL.includes('localhost') || APP_URL.includes('127.0.0.1');
+
+  const handleOAuthConnect = (provider: 'google' | 'microsoft') => {
+    if (!user) return;
+    window.location.href = getOAuthUrl(provider, user.id);
   };
 
   const handleManualSubmit = (provider: 'gmail' | 'outlook') => {
@@ -31,11 +39,21 @@ export function EmailConnect({ onDone, compact = false }: EmailConnectProps) {
       status: 'active',
     };
     addEmailConnection(connection);
-    setShowManualForm(null);
-    setConnectingProvider(null);
+    setManualMode(null);
     setManualEmail('');
-    setSuccessMessage(`${provider === 'gmail' ? 'Gmail' : 'Outlook'} connected! We'll start scanning your inbox for financial documents.`);
-    setTimeout(() => setSuccessMessage(''), 5000);
+    const label = provider === 'gmail' ? 'Gmail' : 'Outlook';
+    setSuccessMessage(`✓ ${label} connected! We'll start scanning your inbox for financial documents.`);
+    setTimeout(() => setSuccessMessage(''), 6000);
+    onDone?.();
+  };
+
+  const handleConnect = (provider: 'gmail' | 'outlook') => {
+    const oauthProvider = provider === 'gmail' ? 'google' : 'microsoft';
+    if (isLocalDev) {
+      setManualMode(provider);
+    } else {
+      handleOAuthConnect(oauthProvider);
+    }
   };
 
   const handleDisconnect = (provider: 'gmail' | 'outlook') => {
@@ -58,11 +76,11 @@ export function EmailConnect({ onDone, compact = false }: EmailConnectProps) {
           connected={gmailConnected}
           onConnect={() => handleConnect('gmail')}
           onDisconnect={() => handleDisconnect('gmail')}
-          showForm={showManualForm === 'gmail'}
+          showForm={manualMode === 'gmail'}
           manualEmail={manualEmail}
           setManualEmail={setManualEmail}
           onSubmitForm={() => handleManualSubmit('gmail')}
-          onCancelForm={() => { setShowManualForm(null); setConnectingProvider(null); setManualEmail(''); }}
+          onCancelForm={() => { setManualMode(null); setManualEmail(''); }}
         />
         <EmailProviderRow
           provider="outlook"
@@ -72,11 +90,11 @@ export function EmailConnect({ onDone, compact = false }: EmailConnectProps) {
           connected={outlookConnected}
           onConnect={() => handleConnect('outlook')}
           onDisconnect={() => handleDisconnect('outlook')}
-          showForm={showManualForm === 'outlook'}
+          showForm={manualMode === 'outlook'}
           manualEmail={manualEmail}
           setManualEmail={setManualEmail}
           onSubmitForm={() => handleManualSubmit('outlook')}
-          onCancelForm={() => { setShowManualForm(null); setConnectingProvider(null); setManualEmail(''); }}
+          onCancelForm={() => { setManualMode(null); setManualEmail(''); }}
         />
       </div>
     );
@@ -122,11 +140,11 @@ export function EmailConnect({ onDone, compact = false }: EmailConnectProps) {
             connected={gmailConnected}
             onConnect={() => handleConnect('gmail')}
             onDisconnect={() => handleDisconnect('gmail')}
-            showForm={showManualForm === 'gmail'}
-            manualEmail={manualEmail}
-            setManualEmail={setManualEmail}
-            onSubmitForm={() => handleManualSubmit('gmail')}
-            onCancelForm={() => { setShowManualForm(null); setConnectingProvider(null); setManualEmail(''); }}
+            showForm={manualMode === 'gmail'}
+          manualEmail={manualEmail}
+          setManualEmail={setManualEmail}
+          onSubmitForm={() => handleManualSubmit('gmail')}
+          onCancelForm={() => { setManualMode(null); setManualEmail(''); }}
           />
           <EmailProviderCard
             provider="outlook"
@@ -137,11 +155,11 @@ export function EmailConnect({ onDone, compact = false }: EmailConnectProps) {
             connected={outlookConnected}
             onConnect={() => handleConnect('outlook')}
             onDisconnect={() => handleDisconnect('outlook')}
-            showForm={showManualForm === 'outlook'}
-            manualEmail={manualEmail}
-            setManualEmail={setManualEmail}
-            onSubmitForm={() => handleManualSubmit('outlook')}
-            onCancelForm={() => { setShowManualForm(null); setConnectingProvider(null); setManualEmail(''); }}
+            showForm={manualMode === 'outlook'}
+          manualEmail={manualEmail}
+          setManualEmail={setManualEmail}
+          onSubmitForm={() => handleManualSubmit('outlook')}
+          onCancelForm={() => { setManualMode(null); setManualEmail(''); }}
           />
         </div>
 
@@ -295,7 +313,7 @@ function EmailProviderCard({
             </button>
           </div>
           <p style={{ color: '#475569', fontSize: '11px', marginTop: '8px' }}>
-            ℹ️ Full OAuth integration coming in Phase 2. For now, register your email address so we can set up your forwarding rules.
+            🔒 Read-only access only. We never send emails or modify your inbox.
           </p>
         </div>
       )}
