@@ -118,7 +118,7 @@ function ScoreBar({ score }: { score: number }) {
 type TabId = 'alerts' | 'vendors' | 'monthly';
 
 export default function IntelligenceView() {
-  const [alerts, setAlerts] = useState<PatternAlert[]>(MOCK_ALERTS);
+  const [alerts, setAlerts] = useState<PatternAlert[]>([]);
   const [activeTab, setActiveTab] = useState<TabId>('alerts');
   const [filterType, setFilterType] = useState<AlertType | 'all'>('all');
 
@@ -220,7 +220,7 @@ export default function IntelligenceView() {
                 <div className="w-2 h-2 rounded-full bg-[#10B981] animate-pulse" />
                 <span className="text-xs font-bold text-[#059669] uppercase tracking-wide">Engine Active</span>
               </div>
-              <div className="text-xs text-[#065F46]">Monitoring 6 vendors · 142 invoices · 8 contracts</div>
+              <div className="text-xs text-[#065F46]">Upload documents to begin monitoring vendors, invoices, and contracts</div>
             </div>
           </div>
         </div>
@@ -234,7 +234,14 @@ export default function IntelligenceView() {
             <p className="text-xs text-[#64748B] mt-0.5">Scored 0-100 based on invoice accuracy, response time, and contract compliance</p>
           </div>
           <div className="p-4">
-            {MOCK_VENDORS.map(vendor => {
+            {([] as VendorProfile[]).length === 0 && (
+              <div className="py-10 text-center">
+                <Building2 size={28} className="text-[#CBD5E1] mx-auto mb-2" />
+                <div className="text-sm font-semibold text-[#0F172A]">No vendor data yet</div>
+                <div className="text-xs text-[#64748B] mt-1">Vendor profiles are built automatically as you upload invoices and contracts</div>
+              </div>
+            )}
+            {([] as VendorProfile[]).map(vendor => {
               const trendIcon = vendor.trend === 'up' ? '↑' : vendor.trend === 'down' ? '↓' : '→';
               const trendColor = vendor.trend === 'up' ? '#10B981' : vendor.trend === 'down' ? '#EF4444' : '#94A3B8';
               return (
@@ -282,11 +289,11 @@ export default function IntelligenceView() {
             <div className="bg-white rounded-xl border border-[#E2E8F0] p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-[#0F172A] mb-3">Month Summary</h3>
               {[
-                { label: 'Total Spend', value: fmt(83200), color: '#0F172A' },
-                { label: 'Flagged for Review', value: fmt(totalRecoverable), color: '#D97706' },
-                { label: 'Recovered / Saved', value: fmt(4800), color: '#059669' },
-                { label: 'Alerts Generated', value: String(MOCK_ALERTS.length), color: '#3B82F6' },
-                { label: 'Vendors Monitored', value: String(MOCK_VENDORS.length), color: '#0F172A' },
+                { label: 'Total Spend', value: activeAlerts.length > 0 ? fmt(83200) : '—', color: '#0F172A' },
+                { label: 'Flagged for Review', value: totalRecoverable > 0 ? fmt(totalRecoverable) : '—', color: '#D97706' },
+                { label: 'Recovered / Saved', value: activeAlerts.length > 0 ? fmt(4800) : '—', color: '#059669' },
+                { label: 'Alerts Generated', value: '0', color: '#3B82F6' },
+                { label: 'Vendors Monitored', value: '0', color: '#0F172A' },
               ].map(row => (
                 <div key={row.label} className="flex justify-between items-center py-2 border-b border-[#F1F5F9] last:border-0">
                   <span className="text-xs text-[#64748B]">{row.label}</span>
@@ -296,7 +303,7 @@ export default function IntelligenceView() {
             </div>
             <div className="bg-[#EFF6FF] rounded-xl border border-[#BFDBFE] p-4">
               <div className="flex items-center gap-2 mb-2"><Brain size={14} className="text-[#3B82F6]" /><span className="text-xs font-bold text-[#1D4ED8]">AI Insight</span></div>
-              <p className="text-xs text-[#1E40AF] leading-relaxed">Maintenance costs are trending 34% above Q1 last year. Consider auditing HandyPro Services and QuickFix Plumbing — both show repeated service patterns suggesting unresolved root causes.</p>
+              <p className="text-xs text-[#1E40AF] leading-relaxed">{activeAlerts.length > 0 ? 'Patterns detected across your documents. Review the Alerts tab for actionable findings.' : 'No documents uploaded yet. Upload invoices, contracts, and insurance documents to enable AI pattern detection.'}</p>
             </div>
           </div>
         </div>
