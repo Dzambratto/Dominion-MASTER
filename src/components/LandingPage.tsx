@@ -325,7 +325,7 @@ function StatsBar() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
           {[
             { value: 95, suffix: '%+', label: 'Extraction Accuracy', prefix: '' },
-            { value: 70000, suffix: '', label: 'Saved vs. Human Controller', prefix: '$' },
+            { value: 99, suffix: '%', label: 'Documents Processed Without Manual Entry', prefix: '' },
             { value: 2, suffix: ' min', label: 'Average Review Time', prefix: '<' },
             { value: 100, suffix: '%', label: 'Full Audit Trail', prefix: '' },
           ].map((stat) => (
