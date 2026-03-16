@@ -25,7 +25,7 @@ export function Sidebar({ activeView, onNavigate, alertCount, summary }: Sidebar
     { id: 'invoices', label: 'Invoices', icon: '📄', badge: summary.anomaliesDetected > 0 ? summary.anomaliesDetected : undefined },
     { id: 'contracts', label: 'Contracts', icon: '📋' },
     { id: 'insurance', label: 'Insurance', icon: '🛡️', badge: summary.coverageGaps > 0 ? summary.coverageGaps : undefined },
-    { id: 'orders', label: 'Orders', icon: '📦', badge: 1 },
+    { id: 'orders', label: 'Orders', icon: '📦' },
     { id: 'payments', label: 'Payments', icon: '💳', badge: summary.pendingApprovals > 0 ? summary.pendingApprovals : undefined },
     { id: 'intelligence', label: 'AI Intelligence', icon: '🧠' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
